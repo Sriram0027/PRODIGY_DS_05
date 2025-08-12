@@ -1,0 +1,45 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+import folium
+from folium.plugins import HeatMap
+file_path = r"C:\MINI PROJECT\PRODIGY\TASK5\US_Accidents_March23.csv"
+df = pd.read_csv(file_path)
+print("Dataset Shape:", df.shape)
+print("Columns:", df.columns)
+df['Start_Time'] = pd.to_datetime(df['Start_Time'], errors='coerce')
+df['Hour'] = df['Start_Time'].dt.hour
+df['Day'] = df['Start_Time'].dt.day_name()
+df['Month'] = df['Start_Time'].dt.month_name()
+df = df.dropna(subset=['Start_Lat', 'Start_Lng', 'Weather_Condition'])
+plt.figure(figsize=(10,6))
+sns.countplot(data=df, x='Hour', palette='coolwarm')
+plt.title("Accidents by Hour of the Day")
+plt.xlabel("Hour")
+plt.ylabel("Number of Accidents")
+plt.grid(True, alpha=0.3)
+plt.show()
+plt.figure(figsize=(10,6))
+sns.countplot(data=df, x='Day', order=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'], palette='magma')
+plt.title("Accidents by Day of the Week")
+plt.xticks(rotation=45)
+plt.show()
+plt.figure(figsize=(12,6))
+top_weather = df['Weather_Condition'].value_counts().head(10)
+sns.barplot(x=top_weather.index, y=top_weather.values, palette='viridis')
+plt.xticks(rotation=45)
+plt.title("Top Weather Conditions During Accidents")
+plt.ylabel("Number of Accidents")
+plt.show()
+plt.figure(figsize=(10,6))
+sns.countplot(data=df, x='Severity', hue='Day', order=[1,2,3,4], palette='Set2')
+plt.title("Accident Severity by Day of the Week")
+plt.show()
+sample_df = df.sample(10000)
+m = folium.Map(location=[37.0902, -95.7129], zoom_start=5)
+heat_data = [[row['Start_Lat'], row['Start_Lng']] for index, row in sample_df.iterrows()]
+HeatMap(heat_data, radius=8, blur=6).add_to(m)
+m.save("accident_hotspots.html")
+print("Heatmap saved as accident_hotspots.html")
+print("\nSummary Statistics:")
+print(df[['Severity', 'Hour', 'Day', 'Month']].describe(include='all'))
